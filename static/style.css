@@ -1,0 +1,71 @@
+/* Base typography */
+body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background: #fdf6f0;
+    color: #333;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .container {
+    max-width: 850px;
+    margin: 2rem auto;
+    padding: 2rem 3rem;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  }
+  
+  h1 {
+    font-family: 'Georgia', serif;
+    font-size: 2.5rem;
+    color: black;
+    margin-bottom: 1rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+    color: black;
+    margin-top: 2rem;
+    margin-bottom: 0.8rem;
+    border-bottom: 2px solid;
+    padding-bottom: 0.3rem;
+  }
+  
+  /* Ingredients list */
+  ul.ingredients {
+    list-style-type: none;
+    padding-left: 0;
+    margin: 0;
+  }
+  
+  ul.ingredients li {
+    padding: 0.3rem 0;
+    border-bottom: 1px dashed #f0f0f0;
+  }
+  
+  /* Instructions */
+  ol.instructions {
+    padding-left: 1.2rem;
+    margin-top: 0.5rem;
+  }
+  
+  ol.instructions li {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+  }
+  
+  /* Link styling */
+  a {
+    display: inline-block;
+    margin-top: 2rem;
+    text-decoration: none;
+    color: black;
+    font-weight: bold;
+    transition: color 0.2s ease;
+  }
+  
+  a:hover {
+    color: black;
+  }
+  
