@@ -13,7 +13,8 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 PROMPT = """
 You are a recipe extraction assistant.
-Extract the recipe title, ingredients and instructions from this text. For the instructions section whenever it mentions an ingredient,
+Extract the recipe title, ingredients and instructions from this text. For the ingredients if metric and imperial 
+measurements are given use both and For the instructions section whenever it mentions an ingredient,
 next to the ingredient put the amount that is needed in parentheses. If no amount is specific assume it's the full amount from the 
 ingredient section. Return them in JSON format ONLY:
 
