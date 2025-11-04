@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Recipe Image Parser</title>
+    <style>
+      body { 
+        font-family: sans-serif; 
+        margin: 2rem; 
+        max-width: 600px; 
+        line-height: 1.6;
+      }
+      h1 { color: #333; }
+      input, button { margin-top: 1rem; }
+    </style>
+  </head>
+  <body>
+    <h1>Upload a Recipe Screenshot</h1>
+    <form action="/process_file" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept="image/*,.pdf" required>
+        <button type="submit">Upload and Parse</button>
+    </form>
+  </body>
+</html>

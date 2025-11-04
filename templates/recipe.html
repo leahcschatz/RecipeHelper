@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ recipe.title }}</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      background: #fff8f0;
+      color: #333;
+    }
+    h1 {
+      color: #d35400;
+    }
+    h2 {
+      margin-top: 1.5rem;
+      color: #e67e22;
+    }
+    ul {
+      list-style: disc inside;
+      margin-left: 0;
+    }
+    ol {
+      margin-left: 1.5rem;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>{{ recipe.title }}</h1>
+
+    <h2>Ingredients</h2>
+    <ul>
+      {% for ingredient in recipe.ingredients %}
+        <li>{{ ingredient }}</li>
+      {% endfor %}
+    </ul>
+
+    <h2>Instructions</h2>
+    <ol>
+      {% for step in recipe.instructions %}
+        <li>{{ step }}</li>
+      {% endfor %}
+    </ol>
+
+    <a href="/">⬅ Upload another recipe</a>
+  </div>
+</body>
+</html>
