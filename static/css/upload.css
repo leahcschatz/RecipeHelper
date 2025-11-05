@@ -125,3 +125,16 @@ body {
     border-top-color: #000000; /* solid black highlight */
   }
   
+  /* --- Mobile responsiveness --- */
+/* --- Mobile responsiveness --- */
+@media (max-width: 600px) {
+  .upload-container {
+    width: 90%;
+    max-width: 320px;
+    padding: 1.5rem;
+  }
+
+  h1 {
+    font-size: 1.3rem;
+  }
+}

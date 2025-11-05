@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-    <meta charset="UTF-8">
-    <title>{% block title %}Recipe Helper{% endblock %}</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}Recipe Helper{% endblock %}</title>
 
-    <!-- Shared Dark Mode Styles -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/darkmode.css') }}">
+        <!-- Shared Dark Mode Styles -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/darkmode.css') }}">
 
-    <!-- Page-Specific Styles -->
-    {% block styles %}{% endblock %}
+        <!-- Page-Specific Styles -->
+        {% block styles %}{% endblock %}
     </head>
     <body>
     <!-- 🌙 Shared Dark Mode Toggle -->
