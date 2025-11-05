@@ -1,12 +1,10 @@
 services:
   - type: web
     name: recipehelper
-    env: python
+    env: docker
     plan: free
-    buildCommand: ./render-build.sh
+    dockerfilePath: Dockerfile
     startCommand: gunicorn --log-level debug --access-logfile - --error-logfile - app:app
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.12.3
       - key: OPENAI_API_KEY
         sync: false
