@@ -6,6 +6,7 @@ import pytesseract
 from dotenv import load_dotenv
 import os, openai
 import unicodedata
+import re
 
 app = Flask(__name__)
 load_dotenv()  # loads .env file
@@ -78,6 +79,13 @@ def process_file():
             "ingredients": [],
             "instructions": []
         }
+
+    cleaned_steps = []
+    for step in recipe_data["instructions"]:
+        cleaned = re.sub(r"^\s*\d+\.\s*", "", step)  # removes "1. " at start
+        cleaned_steps.append(cleaned)
+
+    recipe_data["instructions"] = cleaned_steps 
 
     return render_template("recipe.html", recipe=recipe_data)
 

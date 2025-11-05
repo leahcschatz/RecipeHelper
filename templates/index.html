@@ -1,23 +1,25 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Recipe Image Parser</title>
-    <style>
-      body { 
-        font-family: sans-serif; 
-        margin: 2rem; 
-        max-width: 600px; 
-        line-height: 1.6;
-      }
-      h1 { color: #333; }
-      input, button { margin-top: 1rem; }
-    </style>
-  </head>
-  <body>
-    <h1>Upload a Recipe Screenshot</h1>
-    <form action="/process_file" method="post" enctype="multipart/form-data">
-        <input type="file" name="file" accept="image/*,.pdf" required>
-        <button type="submit">Upload and Parse</button>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Recipe Parser</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='upload.css') }}">
+</head>
+<body>
+  <div class="upload-container">
+    <h1>Recipe Parser</h1>
+
+    <form id="image-form" enctype="multipart/form-data">
+      <input type="file" name="file" accept="image/*,.pdf" required>
+      <button class="upload-btn" type="submit">
+        <span id="button-text">Upload</span>
+        <span id="spinner" class="spinner" style="display:none;">⏳</span>
+      </button>    
     </form>
-  </body>
+
+    <pre id="result">Upload a file to see results.</pre>
+  </div>
+
+  <script src="{{ url_for('static', filename='upload.js') }}"></script>
+</body>
 </html>
