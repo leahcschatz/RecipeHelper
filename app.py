@@ -65,7 +65,7 @@ def process_file():
         # --- Extract text ---
         if "pdf" in mime_type:
             app.logger.info("Processing PDF file...")
-            pages = convert_from_bytes(file_bytes, dpi=100)
+            pages = convert_from_bytes(file_bytes, dpi=75)
             for page in pages:
                 extracted_text += pytesseract.image_to_string(page) + "\n"
         elif "image" in mime_type:
