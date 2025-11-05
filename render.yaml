@@ -3,15 +3,10 @@ services:
     name: recipehelper
     env: python
     plan: free
-    buildCommand: pip3 install -r requirements.txt
+    buildCommand: ./render-build.sh
     startCommand: gunicorn app:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.3
       - key: OPENAI_API_KEY
         sync: false
-    packages:
-      - poppler-utils
-      - tesseract-ocr
-      - libtesseract-dev
-      - libleptonica-dev
