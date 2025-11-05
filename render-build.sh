@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
-# Exit on first error
-set -o errexit  
+set -o errexit  # stop on first error
 
-# --- Install system dependencies ---
+# Install system dependencies (Ubuntu)
 apt-get update && apt-get install -y \
-  poppler-utils \        # for PDF → image conversion
-  tesseract-ocr \        # for OCR text extraction
-  libtesseract-dev \     # for pytesseract compatibility
-  libleptonica-dev       # sometimes required by tesseract
+  poppler-utils \
+  tesseract-ocr \
+  libtesseract-dev \
+  libleptonica-dev
 
-# --- Install Python dependencies ---
+# Verify installation (for Render logs)
+echo "Tesseract version:"
+tesseract --version || echo "Tesseract not found after install!"
+
+# Install Python dependencies
 pip3 install --upgrade pip
 pip3 install -r requirements.txt
 
-echo "✅ System and Python dependencies installed successfully."
+echo "✅ Build completed successfully!"
