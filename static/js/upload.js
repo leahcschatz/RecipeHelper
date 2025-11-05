@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const spinner = document.getElementById("spinner");
     const buttonText = document.getElementById("button-text");
     const uploadBtn = form.querySelector(".upload-btn");
-  
+
     fileInput.addEventListener("change", () => {
       console.log(fileInput.files.length ? fileInput.files[0].name : "No file chosen");
     });

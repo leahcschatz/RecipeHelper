@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Recipe Helper{% endblock %}</title>
+
+    <!-- Shared Dark Mode Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/darkmode.css') }}">
+
+    <!-- Page-Specific Styles -->
+    {% block styles %}{% endblock %}
+    </head>
+    <body>
+    <!-- 🌙 Shared Dark Mode Toggle -->
+    {% include '_darkmode.html' %}
+
+    <!-- Page-Specific Content -->
+    {% block content %}{% endblock %}
+
+    <!-- Shared Dark Mode JS -->
+    <script src="{{ url_for('static', filename='js/darkmode.js') }}"></script>
+
+    <!-- Page-Specific Scripts -->
+    {% block scripts %}{% endblock %}
+    </body>
+</html>

@@ -1,29 +1,33 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>{{ recipe.title }}</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-  <div class="container">
-    <h1>{{ recipe.title }}</h1>
+{% extends "base.html" %}
 
-    <h2>Ingredients</h2>
-    <ul class="ingredients">
-      {% for ingredient in recipe.ingredients %}
-        <li>{{ ingredient }}</li>
-      {% endfor %}
-    </ul>
+{% block title %}{{ recipe.title }}{% endblock %}
 
-    <h2>Instructions</h2>
-    <ol class="instructions">
-      {% for step in recipe.instructions %}
-        <li>{{ step }}</li>
-      {% endfor %}
-    </ol>
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/recipe.css') }}">
+{% endblock %}
 
-    <a href="/">⬅ Upload another recipe</a>
-  </div>
-</body>
-</html>
+{% block content %}
+<div class="container">
+  <h1>{{ recipe.title }}</h1>
+
+  <h2>Ingredients</h2>
+  <ul class="ingredients">
+    {% for ingredient in recipe.ingredients %}
+      <li>{{ ingredient }}</li>
+    {% endfor %}
+  </ul>
+
+  <h2>Instructions</h2>
+  <ol class="instructions">
+    {% for step in recipe.instructions %}
+      <li>{{ step }}</li>
+    {% endfor %}
+  </ol>
+
+  <a href="/">⬅ Upload another recipe</a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/recipe.js') }}"></script>
+{% endblock %}

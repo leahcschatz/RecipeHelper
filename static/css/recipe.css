@@ -7,15 +7,6 @@ body {
     padding: 0;
   }
   
-  .container {
-    max-width: 850px;
-    margin: 2rem auto;
-    padding: 2rem 3rem;
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-  }
-  
   h1 {
     font-family: 'Georgia', serif;
     font-size: 2.5rem;
@@ -69,3 +60,30 @@ body {
     color: black;
   }
   
+  /* Default light mode */
+.container {
+  background: #fff;
+  color: #000;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  max-width: 800px;
+  margin: 2rem auto;
+}
+
+/* Dark mode overrides */
+body.dark-mode .container {
+  background: #2e2e2e; /* medium gray background */
+  color: #f8f8f8; /* light text */
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode a {
+  color: #f8f8f8;
+}
+
+body.dark-mode a:hover {
+  color: #ddd;
+}
