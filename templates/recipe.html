@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% block body_class %}recipe-page{% endblock %}
 {% block title %}{{ recipe.title }}{% endblock %}
 
 {% block styles %}
@@ -24,10 +24,6 @@
     {% endfor %}
   </ol>
 
-  <a href="/">⬅ Upload another recipe</a>
+  <a href="/" class="upload-again">⬅ Upload another recipe</a>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/recipe.js') }}"></script>
 {% endblock %}

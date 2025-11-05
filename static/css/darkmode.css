@@ -1,86 +1,143 @@
-/* === Dark Mode Toggle Styles === */
+
+/* --- Shared toggle styles --- */
 .theme-toggle-container {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  z-index: 1000;
-}
-
-.theme-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  cursor: pointer;
-  user-select: none;
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid #000;
-  border-radius: 50px;
-  padding: 0.3rem 0.8rem;
-  backdrop-filter: blur(4px);
-  transition: background 0.3s, border-color 0.3s;
-}
-
-.theme-toggle:hover {
-  background: rgba(255, 255, 255, 1);
-}
-
-.theme-toggle input {
-  display: none;
-}
-
-.toggle-switch {
-  position: relative;
-  width: 50px;
-  height: 26px;
-  background-color: #ccc;
-  border-radius: 50px;
-  transition: background-color 0.3s ease;
-}
-
-.toggle-thumb {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 20px;
-  height: 20px;
-  background-color: #000;
-  border-radius: 50%;
-  transition: transform 0.3s ease, background-color 0.3s ease;
-}
-
-.theme-toggle input:checked ~ .toggle-switch {
-  background-color: #222;
-}
-
-.theme-toggle input:checked ~ .toggle-switch .toggle-thumb {
-  transform: translateX(24px);
-  background-color: #fff;
-}
-
-.toggle-label {
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #000;
-}
-
-body.dark-mode {
-  background-color: #111;
-  color: #f1f1f1;
-}
-
-body.dark-mode .toggle-label {
-  color: #fff;
-}
-
-body.dark-mode .theme-toggle {
-  background: rgba(0, 0, 0, 0.7);
-  border-color: #fff;
-}
-
-body.dark-mode .toggle-switch {
-  background-color: #555;
-}
-
-body.dark-mode .toggle-thumb {
-  background-color: #fff;
-}
+    display: flex;
+    align-items: center;
+    z-index: 10;
+  }
+  
+  /* Index page: stays fixed in top right */
+  body.index-page .theme-toggle-container {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    padding: 0;         /* no extra padding, just hugs the corner */
+  }
+  
+  /* Recipe page: sits at top of content and scrolls away */
+  body.recipe-page .theme-toggle-container {
+    position: relative;
+    justify-content: flex-end;
+    width: 100%;
+    padding: 1rem 2rem;
+    background: transparent;
+  }
+  
+  /* --- Toggle pill/button --- */
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: pointer;
+    user-select: none;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid #000;
+    border-radius: 50px;
+    padding: 0.3rem 0.8rem;
+    backdrop-filter: blur(4px);
+    transition: background 0.3s, border-color 0.3s;
+  }
+  
+  .theme-toggle:hover {
+    background: rgba(255, 255, 255, 1);
+  }
+  
+  .theme-toggle input {
+    display: none;
+  }
+  
+  /* Switch track */
+  .toggle-switch {
+    position: relative;
+    width: 50px;
+    height: 26px;
+    background-color: #ccc;
+    border-radius: 50px;
+    transition: background-color 0.3s ease;
+  }
+  
+  /* Switch thumb */
+  .toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    background-color: #000;
+    border-radius: 50%;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+  }
+  
+  /* Checked state */
+  .theme-toggle input:checked ~ .toggle-switch {
+    background-color: #222;
+  }
+  
+  .theme-toggle input:checked ~ .toggle-switch .toggle-thumb {
+    transform: translateX(24px);
+    background-color: #fff;
+  }
+  
+  .toggle-label {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #000;
+  }
+  
+  /* --- Dark mode styles --- */
+  body.dark-mode {
+    background-color: #111;
+    color: #f1f1f1;
+  }
+  
+  body.dark-mode .toggle-label {
+    color: #fff;
+  }
+  
+  body.dark-mode .theme-toggle {
+    background: rgba(0, 0, 0, 0.7);
+    border-color: #fff;
+  }
+  
+  body.dark-mode .toggle-switch {
+    background-color: #555;
+  }
+  
+  body.dark-mode .toggle-thumb {
+    background-color: #fff;
+  }
+  
+  /* --- Mobile adjustments --- */
+  @media (max-width: 600px) {
+    body.index-page .theme-toggle-container {
+      top: 0.5rem;
+      right: 0.5rem;
+      padding: 0;
+    }
+  
+    body.recipe-page .theme-toggle-container {
+      padding: 0.5rem 1rem;
+    }
+  
+    .toggle-switch {
+      width: 36px;
+      height: 18px;
+    }
+  
+    .toggle-thumb {
+      width: 14px;
+      height: 14px;
+      top: 2px;
+      left: 2px;
+    }
+  
+    .theme-toggle input:checked ~ .toggle-switch .toggle-thumb {
+      transform: translateX(18px);
+    }
+  
+    .toggle-label {
+      font-size: 0.8rem;
+      margin-left: 0.3rem;
+    }
+  }
+  

@@ -1,19 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{% block title %}Recipe Helper{% endblock %}</title>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Recipe Helper{% endblock %}</title>
 
-        <!-- Shared Dark Mode Styles -->
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/darkmode.css') }}">
+    <!-- Shared Dark Mode Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/darkmode.css') }}">
 
-        <!-- Page-Specific Styles -->
-        {% block styles %}{% endblock %}
-    </head>
-    <body>
+    <!-- Page-Specific Styles -->
+    {% block styles %}{% endblock %}
+  </head>
+
+  <!-- 👇 This enables per-page body class -->
+  <body class="{% block body_class %}{% endblock %}">
     <!-- 🌙 Shared Dark Mode Toggle -->
-    {% include '_darkmode.html' %}
+    <div class="theme-toggle-container">
+      {% include '_darkmode.html' %}
+    </div>
 
     <!-- Page-Specific Content -->
     {% block content %}{% endblock %}
@@ -23,5 +27,5 @@
 
     <!-- Page-Specific Scripts -->
     {% block scripts %}{% endblock %}
-    </body>
+  </body>
 </html>

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% block body_class %}index-page{% endblock %}
 {% block title %}Recipe Parser{% endblock %}
 
 {% block styles %}
@@ -9,7 +9,6 @@
 {% block content %}
 <div class="upload-container">
   <h1>Recipe Parser</h1>
-
   <form id="image-form" enctype="multipart/form-data">
     <input type="file" name="file" accept="image/*,.pdf" required>
     <button class="upload-btn" type="submit">
