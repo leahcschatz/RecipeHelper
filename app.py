@@ -4,13 +4,17 @@ from pdf2image import convert_from_bytes
 from PIL import Image
 import pytesseract
 from dotenv import load_dotenv
+import logging
+
 
 # --- App setup ---
 app = Flask(__name__)
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Set up logging for Render visibility
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+app.logger.addHandler(logging.StreamHandler())
 app.logger.setLevel(logging.INFO)
 
 # --- Prompt ---
