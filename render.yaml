@@ -4,7 +4,6 @@ services:
     env: docker
     plan: free
     dockerfilePath: Dockerfile
-    startCommand: gunicorn --log-level debug --access-logfile - --error-logfile - app:app
     envVars:
       - key: OPENAI_API_KEY
         sync: false
