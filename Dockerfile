@@ -29,6 +29,9 @@ ENV FLASK_APP=app.py
 # Expose the port Render will use internally
 EXPOSE 10000
 
+ENV WEB_CONCURRENCY=1
+ENV GUNICORN_CMD_ARGS="--timeout 180 --workers 1 --threads 1"
+
 # Start the app with gunicorn
 # Render will set PORT env var, so we use that
 CMD exec gunicorn --bind 0.0.0.0:${PORT:-10000} app:app
