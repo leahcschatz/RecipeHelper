@@ -88,12 +88,19 @@ body {
   
   .spinner {
     display: inline-block;
-    animation: spin 1s linear infinite;
-    font-size: 1rem;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.3); /* light gray */
+    border-top-color: #ffffff; /* bright white highlight */
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    vertical-align: middle;
+    margin-left: 8px; /* spacing from the text */
   }
   
   @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    to { transform: rotate(360deg); }
   }
+  
+  
   
