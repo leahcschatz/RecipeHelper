@@ -48,15 +48,19 @@ def index():
 # --- File processing route ---
 @app.route('/process_file', methods=['POST'])
 def process_file():
+    print("📥 /process_file endpoint hit", flush=True)
     try:
         uploaded_file = request.files.get('file')
         if not uploaded_file:
+            print("⚠️ No file uploaded", flush=True)
             app.logger.error("No file uploaded.")
             return jsonify({"error": "No file uploaded"}), 400
 
         mime_type = uploaded_file.mimetype.lower()
         file_bytes = uploaded_file.read()
         extracted_text = ""
+
+        print(f"📄 Got file: {uploaded_file.filename} ({uploaded_file.mimetype})", flush=True)
 
         # --- Extract text ---
         if "pdf" in mime_type:
@@ -113,6 +117,7 @@ def process_file():
         return render_template("recipe.html", recipe=recipe_data)
 
     except Exception as e:
+        print(f"❌ Exception in /process_file: {e}", flush=True)
         app.logger.exception("Unexpected server error.")
         return jsonify({"error": f"Server error: {str(e)}"}), 500
 
