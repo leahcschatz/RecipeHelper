@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const spinner = document.getElementById("spinner");
     const buttonText = document.getElementById("button-text");
     const uploadBtn = form.querySelector(".upload-btn");
+    const formData = new FormData();
 
     fileInput.addEventListener("change", () => {
       console.log(fileInput.files.length ? fileInput.files[0].name : "No file chosen");
@@ -17,7 +18,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
   
-      const formData = new FormData();
       formData.append("file", fileInput.files[0]);
   
       try {
@@ -50,5 +50,41 @@ document.addEventListener("DOMContentLoaded", () => {
         alert(`Upload error: ${err}`);
       }
     };
+
+    document.getElementById("url-form").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const urlInput = document.querySelector('input[name="url"]');
+      const url = urlInput.value.trim();
+      if (!url) return alert("Please enter a URL.");
+    
+      formData.append("url", url);
+      const button = this.querySelector("button");
+      const buttonText = button.querySelector("span");
+      buttonText.textContent = "Processing...";
+      button.disabled = true;
+    
+      try {
+        const response = await fetch("/process_url", {
+          method: "POST",
+          body: formData,
+        });
+    
+        if (!response.ok) throw new Error("Failed to process URL.");
+    
+        // Render the recipe page HTML returned by Flask
+        const html = await response.text();
+        document.open();
+        document.write(html);
+        document.close();
+    
+      } catch (err) {
+        console.error(err);
+        alert("Error processing URL. Please check the link and try again.");
+      } finally {
+        buttonText.textContent = "Submit URL";
+        button.disabled = false;
+      }
+    });
+    
   });
   

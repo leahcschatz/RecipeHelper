@@ -35,6 +35,20 @@ body {
     border-bottom: 1px dashed #f0f0f0;
   }
   
+  ul.ingredients li.ingredient-header {
+    font-weight: bold;
+    font-style: italic;
+    margin-top: 0.8rem;
+    margin-bottom: 0.3rem;
+    padding-top: 0.5rem;
+    color: #555;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  ul.ingredients li.ingredient-header:first-child {
+    margin-top: 0;
+  }
+  
   /* Instructions */
   ol.instructions {
     padding-left: 1.2rem;
@@ -86,6 +100,11 @@ body.dark-mode a {
 
 body.dark-mode a:hover {
   color: #ddd;
+}
+
+body.dark-mode ul.ingredients li.ingredient-header {
+  color: #bbb;
+  border-bottom-color: #555;
 }
 
 /* --- Mobile responsiveness --- */

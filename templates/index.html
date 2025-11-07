@@ -8,14 +8,24 @@
 
 {% block content %}
 <div class="upload-container">
-  <h1>Recipe Parser</h1>
-  <form id="image-form" enctype="multipart/form-data">
-    <input type="file" name="file" accept="image/*,.pdf" required>
-    <button class="upload-btn" type="submit">
-      <span id="button-text">Upload</span>
-      <span id="spinner" class="spinner" style="display:none;"></span>
-    </button>    
-  </form>
+    <h1>Recipe Parser</h1>
+    <form id="image-form" enctype="multipart/form-data">
+        <h2>Upload a File</h2>
+        <input type="file" name="file" accept="image/*,.pdf">
+        <button class="upload-btn" type="submit">
+        <span id="button-text">Upload</span>
+        <span id="spinner" class="spinner" style="display:none;"></span>
+        </button>
+    </form>
+    <hr/>
+    <!-- New URL submission form -->
+    <form id="url-form">
+        <h2>Paste a Recipe URL</h2>
+        <input type="url" name="url" placeholder="https://example.com/recipe" required style="width: 100%; padding: 0.5rem;">
+        <button class="upload-btn" type="submit">
+        <span>Submit URL</span>
+        </button>
+    </form>   
 </div>
 {% endblock %}
 

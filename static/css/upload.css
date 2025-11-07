@@ -23,6 +23,7 @@ body {
   h1 {
     font-size: 2rem;
     margin-bottom: 25px;
+    text-align: center;
   }
   
   /* Form and buttons */
@@ -136,5 +137,26 @@ body {
 
   h1 {
     font-size: 1.3rem;
-  }
+    text-align: center;
+  }  
+}
+
+h2 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+input[type="url"] {
+  border: 1px solid #000;
+  border-radius: 5px;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+hr {
+  width: 80%;
+  opacity: 0.4;
+  margin: 2rem auto; /* centers it horizontally */
+  border: 0; 
+  border-top: 1px solid #ccc;
 }
