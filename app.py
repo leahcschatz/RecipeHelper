@@ -39,37 +39,57 @@ def index():
 def process_file():
     print("📥 /process_file endpoint hit", flush=True)
     try:
-        uploaded_file = request.files.get('file')
-        if not uploaded_file:
-            print("⚠️ No file uploaded", flush=True)
-            app.logger.error("No file uploaded.")
-            return jsonify({"error": "No file uploaded"}), 400
+        # Get all uploaded files (support multiple files)
+        uploaded_files = request.files.getlist('file')
+        if not uploaded_files or len(uploaded_files) == 0:
+            print("⚠️ No files uploaded", flush=True)
+            app.logger.error("No files uploaded.")
+            return jsonify({"error": "No files uploaded"}), 400
 
-        mime_type = uploaded_file.mimetype.lower()
-        file_bytes = uploaded_file.read()
+        print(f"📄 Got {len(uploaded_files)} file(s)", flush=True)
         extracted_text = ""
+        all_text_parts = []
 
-        print(f"📄 Got file: {uploaded_file.filename} ({uploaded_file.mimetype})", flush=True)
+        # Process each file
+        for idx, uploaded_file in enumerate(uploaded_files):
+            if not uploaded_file.filename:
+                continue
+                
+            mime_type = uploaded_file.mimetype.lower()
+            file_bytes = uploaded_file.read()
+            file_text = ""
 
-        # --- Extract text ---
-        if "pdf" in mime_type:
-            app.logger.info("Processing PDF file...")
-            pages = convert_from_bytes(file_bytes, dpi=75)
-            for page in pages:
-                extracted_text += pytesseract.image_to_string(page) + "\n"
-        elif "image" in mime_type:
-            app.logger.info("Processing image file...")
-            image = Image.open(io.BytesIO(file_bytes))
-            extracted_text = pytesseract.image_to_string(image)
-        else:
-            app.logger.warning(f"Unsupported file type: {mime_type}")
-            return jsonify({"error": f"Unsupported file type: {mime_type}"}), 400
+            print(f"📄 Processing file {idx + 1}/{len(uploaded_files)}: {uploaded_file.filename} ({uploaded_file.mimetype})", flush=True)
 
-        if not extracted_text.strip():
-            app.logger.error("Empty extracted text.")
-            return jsonify({"error": "Could not extract text from file."}), 400
+            # --- Extract text ---
+            if "pdf" in mime_type:
+                app.logger.info(f"Processing PDF file: {uploaded_file.filename}")
+                pages = convert_from_bytes(file_bytes, dpi=75)
+                for page in pages:
+                    file_text += pytesseract.image_to_string(page) + "\n"
+            elif "image" in mime_type:
+                app.logger.info(f"Processing image file: {uploaded_file.filename}")
+                image = Image.open(io.BytesIO(file_bytes))
+                file_text = pytesseract.image_to_string(image)
+            else:
+                app.logger.warning(f"Unsupported file type: {mime_type} for {uploaded_file.filename}")
+                continue  # Skip unsupported files but continue with others
 
+            if file_text.strip():
+                all_text_parts.append(file_text)
+            else:
+                app.logger.warning(f"Could not extract text from {uploaded_file.filename}")
+
+        # Combine all extracted text
+        if not all_text_parts:
+            app.logger.error("No text extracted from any file.")
+            return jsonify({"error": "Could not extract text from any file."}), 400
+
+        # Join all text parts with page separators
+        extracted_text = "\n\n--- Page Break ---\n\n".join(all_text_parts)
         extracted_text = unicodedata.normalize("NFKC", extracted_text)
+        
+        app.logger.info(f"Combined text from {len(all_text_parts)} file(s), total length: {len(extracted_text)} characters")
 
         # --- OpenAI call ---
 

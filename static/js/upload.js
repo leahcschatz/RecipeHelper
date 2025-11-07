@@ -4,25 +4,36 @@ document.addEventListener("DOMContentLoaded", () => {
     const spinner = document.getElementById("spinner");
     const buttonText = document.getElementById("button-text");
     const uploadBtn = form.querySelector(".upload-btn");
-    const formData = new FormData();
 
     fileInput.addEventListener("change", () => {
-      console.log(fileInput.files.length ? fileInput.files[0].name : "No file chosen");
+      const fileCount = fileInput.files.length;
+      if (fileCount > 0) {
+        console.log(`${fileCount} file(s) selected:`, Array.from(fileInput.files).map(f => f.name).join(", "));
+      } else {
+        console.log("No files chosen");
+      }
     });
   
     form.onsubmit = async (e) => {
       e.preventDefault();
   
       if (!fileInput.files.length) {
-        alert("Please choose a file first");
+        alert("Please choose at least one file first");
         return;
       }
   
-      formData.append("file", fileInput.files[0]);
+      // Create new FormData for each submission
+      const formData = new FormData();
+      
+      // Append all selected files
+      for (let i = 0; i < fileInput.files.length; i++) {
+        formData.append("file", fileInput.files[i]);
+      }
   
       try {
         spinner.style.display = "inline-block";
-        buttonText.textContent = "Uploading...";
+        const fileCount = fileInput.files.length;
+        buttonText.textContent = fileCount > 1 ? `Processing ${fileCount} files...` : "Uploading...";
         uploadBtn.disabled = true;
   
         const res = await fetch("/process_file", {
@@ -35,7 +46,8 @@ document.addEventListener("DOMContentLoaded", () => {
         buttonText.textContent = "Upload";
   
         if (!res.ok) {
-          alert(`Upload failed: ${res.statusText}`);
+          const errorData = await res.json().catch(() => ({ error: res.statusText }));
+          alert(`Upload failed: ${errorData.error || res.statusText}`);
           return;
         }
   
@@ -57,6 +69,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const url = urlInput.value.trim();
       if (!url) return alert("Please enter a URL.");
     
+      const formData = new FormData();
       formData.append("url", url);
       const button = this.querySelector("button");
       const buttonText = button.querySelector("span");
