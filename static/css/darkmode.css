@@ -12,6 +12,7 @@
     top: 1rem;
     right: 1rem;
     padding: 0;         /* no extra padding, just hugs the corner */
+    z-index: 1000;      /* ensure it stays on top when scrolling */
   }
   
   /* Recipe page: sits at top of content and scrolls away */
