@@ -110,20 +110,27 @@ body.dark-mode ul.ingredients li.ingredient-header {
 /* --- Mobile responsiveness --- */
 @media (max-width: 600px) {
   body {
-    background: #1e1e1e; /* darker gray backdrop */
     padding: 0.75rem;    /* reveal rounded corners */
   }
 
   .container {
-    background: #2e2e2e; /* inner gray box */
     margin: 0 auto;
     padding: 1.25rem;
     border-radius: 12px;
-    box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
     max-width: 90%;      /* smaller than full width */
   }
 
   h1, h2, p, li {
     font-size: 1rem;
+  }
+  
+  /* Dark mode mobile styles */
+  body.dark-mode {
+    background: #1e1e1e; /* darker gray backdrop */
+  }
+  
+  body.dark-mode .container {
+    background: #2e2e2e; /* inner gray box */
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
   }
 }
