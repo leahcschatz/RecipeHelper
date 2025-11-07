@@ -12,6 +12,7 @@ defusedxml==0.7.1
 distro==1.9.0
 Flask==3.1.2
 fonttools==4.60.1
+gunicorn==21.2.0
 fpdf2==2.8.5
 greenlet==3.2.4
 h11==0.16.0
