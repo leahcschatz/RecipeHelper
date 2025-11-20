@@ -296,15 +296,35 @@ def try_google_vision(file_bytes):
         return ""
 
 
+def resize_image_if_needed(image, max_dimension=2000):
+    """Resize image if too large to save memory. Maintains aspect ratio."""
+    width, height = image.size
+    if width <= max_dimension and height <= max_dimension:
+        return image
+    
+    # Calculate new size maintaining aspect ratio
+    if width > height:
+        new_width = max_dimension
+        new_height = int(height * (max_dimension / width))
+    else:
+        new_height = max_dimension
+        new_width = int(width * (max_dimension / height))
+    
+    app.logger.info(f"Resizing image from {width}x{height} to {new_width}x{new_height} to save memory")
+    return image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+
+
 def extract_text_from_file(file_bytes, mime_type, filename):
     """Extract text from a file (PDF or image) using OCR."""
     if "pdf" in mime_type:
         app.logger.info(f"Processing PDF file: {filename}")
-        # Increase DPI for better OCR quality
-        pages = convert_from_bytes(file_bytes, dpi=200)
+        # Reduce DPI for memory efficiency
+        pages = convert_from_bytes(file_bytes, dpi=150)
         text = ""
         custom_config = r'--oem 3 --psm 6'
         for page in pages:
+            # Resize if too large
+            page = resize_image_if_needed(page, max_dimension=2000)
             # Preprocess PDF pages similar to images
             page = page.convert('L')  # Grayscale
             enhancer = ImageEnhance.Contrast(page)
@@ -317,117 +337,108 @@ def extract_text_from_file(file_bytes, mime_type, filename):
     elif "image" in mime_type:
         app.logger.info(f"Processing image file: {filename}")
         try:
-            # Load image
+            # Load and resize image to save memory
             image = Image.open(io.BytesIO(file_bytes))
             if image.mode != 'RGB':
                 image = image.convert('RGB')
             
+            # Resize if too large (saves significant memory)
+            image = resize_image_if_needed(image, max_dimension=2000)
+            
             img_array = np.array(image)
             app.logger.info(f"Image loaded: {image.size[0]}x{image.size[1]} pixels, mode: {image.mode}")
             
-            text = None
-            ocr_methods = []
-            
-            # Try Google Cloud Vision first (best accuracy for phone photos)
+            # Try Google Cloud Vision first (no local models, most memory efficient)
             if vision_client:
-                ocr_methods.append(('Google Vision', lambda: try_google_vision(file_bytes)))
+                try:
+                    app.logger.info("Trying Google Vision (memory efficient, no local models)")
+                    text = try_google_vision(file_bytes)
+                    if text and len(text.strip()) > 10:
+                        app.logger.info(f"✓ Google Vision SUCCESS: {len(text)} characters extracted")
+                        return text
+                except Exception as e:
+                    app.logger.warning(f"Google Vision failed: {e}, trying local OCR...")
             
-            # Try multiple preprocessing approaches and original image
-            # EasyOCR often works better with original or lightly processed images
-            original_img = img_array.copy()
-            light_processed = preprocess_phone_image(img_array, method='light')
-            moderate_processed = preprocess_phone_image(img_array, method='moderate')
-            
-            # Try PaddleOCR with different preprocessing
-            if PADDLEOCR_AVAILABLE:
-                ocr_methods.append(('PaddleOCR (original)', lambda: try_paddleocr(original_img)))
-                ocr_methods.append(('PaddleOCR (light)', lambda: try_paddleocr(light_processed)))
-            
-            # Try EasyOCR with original and lightly processed (works best without heavy preprocessing)
-            ocr_methods.append(('EasyOCR (original)', lambda: try_easyocr(original_img)))
-            ocr_methods.append(('EasyOCR (light)', lambda: try_easyocr(light_processed)))
-            
-            # Try pytesseract with preprocessing (last resort)
-            ocr_methods.append(('Pytesseract (moderate)', lambda: try_pytesseract(moderate_processed)))
-            
-            # Try each OCR method until one succeeds with valid text
+            # If Google Vision not available or failed, try local OCR methods one at a time
+            # Only create one processed version at a time to save memory
+            text = None
             best_text = None
-            best_method = None
             best_score = 0
             
-            for method_name, ocr_func in ocr_methods:
-                try:
-                    app.logger.info(f"Trying {method_name} for {filename}")
-                    text = ocr_func()
-                    if text:
-                        # Score the text quality (more words = better)
-                        words = text.split()
-                        word_count = len([w for w in words if len(w) > 2])  # Count words longer than 2 chars
-                        text_preview = text[:300].replace('\n', '\\n')
-                        app.logger.info(f"{method_name} extracted {len(text)} chars, {word_count} words. Preview: {text_preview}...")
-                        
-                        # Check if this looks like actual text (not just random characters)
-                        # Good text should have reasonable word-to-char ratio
-                        if len(text) > 0:
-                            word_ratio = word_count / len(text.split()) if len(text.split()) > 0 else 0
-                            # Prefer text with more actual words
-                            if word_count > best_score:
-                                best_text = text
-                                best_method = method_name
-                                best_score = word_count
-                    else:
-                        app.logger.warning(f"{method_name} returned None or empty text")
-                except Exception as e:
-                    app.logger.warning(f"✗ {method_name} failed with exception: {str(e)}")
-                    continue
+            # Try EasyOCR first (often best for phone photos, but loads models)
+            try:
+                app.logger.info("Trying EasyOCR (original image)")
+                text = try_easyocr(img_array)
+                if text:
+                    words = text.split()
+                    word_count = len([w for w in words if is_valid_word(w)])
+                    app.logger.info(f"EasyOCR extracted {len(text)} chars, {word_count} valid words")
+                    if word_count > best_score:
+                        best_text = text
+                        best_score = word_count
+                    if word_count >= 10:  # Good enough, stop here
+                        app.logger.info(f"✓ EasyOCR SUCCESS: {len(text)} characters extracted")
+                        return text
+            except Exception as e:
+                app.logger.warning(f"EasyOCR failed: {e}")
             
-            # Use the best result
+            # Try pytesseract (lightweight, no model loading)
+            try:
+                app.logger.info("Trying Pytesseract (lightweight)")
+                light_processed = preprocess_phone_image(img_array, method='light')
+                text = try_pytesseract(light_processed)
+                if text:
+                    words = text.split()
+                    word_count = len([w for w in words if is_valid_word(w)])
+                    app.logger.info(f"Pytesseract extracted {len(text)} chars, {word_count} valid words")
+                    if word_count > best_score:
+                        best_text = text
+                        best_score = word_count
+                    if word_count >= 10:
+                        app.logger.info(f"✓ Pytesseract SUCCESS: {len(text)} characters extracted")
+                        # Clear memory before returning
+                        del light_processed
+                        del img_array
+                        return text
+                # Clear memory
+                del light_processed
+            except Exception as e:
+                app.logger.warning(f"Pytesseract failed: {e}")
+            
+            # Use best result if we have one
             text = best_text
-            if text and best_method:
-                app.logger.info(f"✓ Best result from {best_method}: {len(text)} chars, {best_score} words")
-                app.logger.info(f"Raw text before filtering: {text[:500]}...")
-            
-            # Filter out garbage and keep only readable text
-            if text:
-                original_length = len(text)
-                text = filter_garbage_text(text)
-                app.logger.info(f"After filtering: {original_length} -> {len(text)} chars")
-                
-                words = text.split()
-                valid_words = [w for w in words if is_valid_word(w)]
-                
-                # Calculate quality metrics
-                total_chars = len(text)
-                alpha_chars = sum(1 for c in text if c.isalpha())
-                alpha_ratio = alpha_chars / total_chars if total_chars > 0 else 0
-                
-                app.logger.info(f"Text quality metrics: {len(valid_words)} valid words, {alpha_ratio:.2%} alphabetic chars")
-                app.logger.info(f"Filtered text preview: {text[:500]}...")
-                
-                # Need reasonable amount of valid text
-                if len(valid_words) < 10 or alpha_ratio < 0.3:  # At least 10 words and 30% letters
-                    app.logger.error(f"Extracted text appears to be garbage after filtering.")
-                    app.logger.error(f"Valid words: {len(valid_words)}, Alpha ratio: {alpha_ratio:.2%}")
-                    app.logger.error(f"Filtered text sample: {text[:500]}")
-                    raise Exception(f"OCR extracted invalid text. Image may be too blurry, low quality, or unreadable. Please try:\n1. Taking a clearer photo with better lighting\n2. Ensuring the text is in focus\n3. Using a higher resolution image")
+            # Clear memory
+            del img_array
             
             if not text or len(text.strip()) < 10:
                 app.logger.error(f"All OCR methods failed. Text length: {len(text) if text else 0}")
                 raise Exception("All OCR methods failed to extract sufficient text")
             
+            app.logger.info(f"✓ Best result: {len(text)} chars, {best_score} valid words")
+            
+            # Filter out garbage and validate text quality
+            original_length = len(text)
+            text = filter_garbage_text(text)
+            app.logger.info(f"After filtering: {original_length} -> {len(text)} chars")
+            
+            words = text.split()
+            valid_words = [w for w in words if is_valid_word(w)]
+            total_chars = len(text)
+            alpha_chars = sum(1 for c in text if c.isalpha())
+            alpha_ratio = alpha_chars / total_chars if total_chars > 0 else 0
+            
+            app.logger.info(f"Text quality metrics: {len(valid_words)} valid words, {alpha_ratio:.2%} alphabetic chars")
+            app.logger.info(f"Filtered text preview: {text[:500]}...")
+            
+            if len(valid_words) < 10 or alpha_ratio < 0.3:
+                app.logger.error(f"Extracted text appears to be garbage after filtering.")
+                app.logger.error(f"Valid words: {len(valid_words)}, Alpha ratio: {alpha_ratio:.2%}")
+                raise Exception(f"OCR extracted invalid text. Image may be too blurry, low quality, or unreadable. Please try:\n1. Taking a clearer photo with better lighting\n2. Ensuring the text is in focus\n3. Using a higher resolution image")
+            
             # Log detailed text information
             text_length = len(text)
             text_lines = len(text.split('\n'))
             app.logger.info(f"OCR SUCCESS: Extracted {text_length} characters in {text_lines} lines")
-            
-            # Log first 500 characters for debugging
-            preview = text[:500].replace('\n', '\\n')
-            app.logger.info(f"Text preview (first 500 chars): {preview}...")
-            
-            # Log last 200 characters
-            if len(text) > 500:
-                tail = text[-200:].replace('\n', '\\n')
-                app.logger.info(f"Text tail (last 200 chars): ...{tail}")
             
             return text
         except Exception as e:
