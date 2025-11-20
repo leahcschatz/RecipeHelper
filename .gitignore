@@ -2,3 +2,8 @@
 __pycache__/
 .env
 *.pyc
+service-account-key.json
+*-key.json
+*.json
+!package.json
+!package-lock.json

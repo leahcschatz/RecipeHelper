@@ -16,7 +16,7 @@
       {% if ingredient.endswith(':') or ingredient.lower().startswith('for the') or ingredient.lower().startswith('for ') %}
         <li class="ingredient-header">{{ ingredient }}</li>
       {% else %}
-        <li>{{ ingredient }}</li>
+      <li>{{ ingredient }}</li>
       {% endif %}
     {% endfor %}
   </ul>
