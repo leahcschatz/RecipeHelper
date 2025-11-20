@@ -1,7 +1,7 @@
 # Use a lightweight Python base image
 FROM python:3.12-slim
 
-# Install system dependencies for tesseract & pdf2image
+# Install system dependencies for tesseract, pdf2image, and build tools
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     poppler-utils \
@@ -9,6 +9,8 @@ RUN apt-get update && apt-get install -y \
     libsm6 \
     libxrender1 \
     libxext6 \
+    build-essential \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -16,6 +18,9 @@ WORKDIR /app
 
 # Copy requirements first (better Docker caching)
 COPY requirements.txt .
+
+# Upgrade pip first
+RUN pip install --upgrade pip
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
