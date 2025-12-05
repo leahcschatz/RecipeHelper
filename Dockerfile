@@ -1,42 +1,53 @@
-# Use a lightweight Python base image
+# Multi-stage build to reduce final image size
+# Stage 1: Build dependencies
+FROM python:3.12-slim as builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy requirements and install Python packages
+COPY requirements.txt .
+RUN pip install --no-cache-dir --user -r requirements.txt
+
+# Stage 2: Runtime image (much smaller)
 FROM python:3.12-slim
 
-# Install system dependencies for tesseract, pdf2image, and build tools
-RUN apt-get update && apt-get install -y \
+# Install only runtime system dependencies (no build tools)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
     poppler-utils \
     libglib2.0-0 \
     libsm6 \
     libxrender1 \
     libxext6 \
-    build-essential \
-    python3-dev \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Copy Python packages from builder
+COPY --from=builder /root/.local /root/.local
+
+# Make sure scripts in .local are usable
+ENV PATH=/root/.local/bin:$PATH
 
 # Set working directory
 WORKDIR /app
 
-# Copy requirements first (better Docker caching)
-COPY requirements.txt .
-
-# Upgrade pip first
-RUN pip install --upgrade pip
-
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the rest of the app
+# Copy application code
 COPY . .
 
 # Tell Flask / gunicorn which app to run
 ENV FLASK_APP=app.py
 
-# Expose the port Render will use internally
+# Expose the port
 EXPOSE 10000
 
 ENV WEB_CONCURRENCY=1
 ENV GUNICORN_CMD_ARGS="--timeout 180 --workers 1 --threads 1"
 
 # Start the app with gunicorn
-# Render will set PORT env var, so we use that
 CMD exec gunicorn --bind 0.0.0.0:${PORT:-10000} app:app

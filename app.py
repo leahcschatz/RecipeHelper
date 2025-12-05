@@ -255,6 +255,7 @@ def try_easyocr(img_array):
     """Try EasyOCR."""
     if not hasattr(extract_text_from_file, '_easyocr_reader'):
         app.logger.info("Initializing EasyOCR reader (first time only)...")
+        # Models will be downloaded on first use at runtime, not during Docker build
         extract_text_from_file._easyocr_reader = easyocr.Reader(['en'], gpu=False)
     
     reader = extract_text_from_file._easyocr_reader
