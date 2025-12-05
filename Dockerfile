@@ -1,23 +1,7 @@
-# Multi-stage build to reduce final image size
-# Stage 1: Build dependencies
-FROM python:3.12-slim as builder
-
-# Install build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    python3-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
-
-# Copy requirements and install Python packages
-COPY requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
-
-# Stage 2: Runtime image (much smaller)
+# Use Python slim image
 FROM python:3.12-slim
 
-# Install only runtime system dependencies (no build tools)
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
     poppler-utils \
@@ -25,27 +9,37 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libsm6 \
     libxrender1 \
     libxext6 \
+    build-essential \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
-
-# Copy Python packages from builder
-COPY --from=builder /root/.local /root/.local
-
-# Make sure scripts in .local are usable
-ENV PATH=/root/.local/bin:$PATH
 
 # Set working directory
 WORKDIR /app
 
+# Copy requirements first (for better Docker layer caching)
+COPY requirements.txt .
+
+# Upgrade pip and install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Remove build tools to reduce image size (after pip install)
+RUN apt-get purge -y build-essential python3-dev && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
+
 # Copy application code
 COPY . .
 
-# Tell Flask / gunicorn which app to run
+# Set environment variables
 ENV FLASK_APP=app.py
+ENV PYTHONUNBUFFERED=1
 
 # Expose the port
 EXPOSE 10000
 
+# Gunicorn settings
 ENV WEB_CONCURRENCY=1
 ENV GUNICORN_CMD_ARGS="--timeout 180 --workers 1 --threads 1"
 

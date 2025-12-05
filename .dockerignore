@@ -27,9 +27,8 @@ ENV/
 .git/
 .gitignore
 
-# Documentation
+# Documentation (keep README if it exists, but not needed for build)
 *.md
-!README.md
 
 # Uploads (don't need in image)
 uploads/
