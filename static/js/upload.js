@@ -39,18 +39,26 @@ document.addEventListener("DOMContentLoaded", () => {
         const res = await fetch("/process_file", {
           method: "POST",
           body: formData,
+          redirect: 'follow'
         });
-  
+        
         spinner.style.display = "none";
         uploadBtn.disabled = false;
         buttonText.textContent = "Upload";
-  
+        
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({ error: res.statusText }));
           alert(`Upload failed: ${errorData.error || res.statusText}`);
           return;
         }
-  
+        
+        // Check if response was a redirect (fetch automatically followed it)
+        if (res.redirected) {
+          // Update the URL in the browser and navigate to the recipe page
+          window.location.href = res.url;
+          return;
+        }
+        
         const html = await res.text();
         document.open();
         document.write(html);
@@ -80,9 +88,17 @@ document.addEventListener("DOMContentLoaded", () => {
         const response = await fetch("/process_url", {
           method: "POST",
           body: formData,
+          redirect: 'follow'
         });
     
         if (!response.ok) throw new Error("Failed to process URL.");
+    
+        // Check if response was a redirect (fetch automatically followed it)
+        if (response.redirected) {
+          // Update the URL in the browser and navigate to the recipe page
+          window.location.href = response.url;
+          return;
+        }
     
         // Render the recipe page HTML returned by Flask
         const html = await response.text();

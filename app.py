@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 import openai
 import io
 import json
@@ -6,6 +6,9 @@ import os
 import re
 import unicodedata
 import logging
+import sqlite3
+import uuid
+from datetime import datetime
 from pdf2image import convert_from_bytes
 from PIL import Image, ImageEnhance, ImageFilter
 import pytesseract
@@ -43,6 +46,99 @@ import trafilatura
 app = Flask(__name__)
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# Session configuration for user tracking
+app.secret_key = os.getenv("SECRET_KEY", os.urandom(24).hex())  # Use env var or generate random key
+
+# Database setup
+DATABASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'recipes.db')
+
+def init_db():
+    """Initialize the database with recipes table and user URL mappings."""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS recipes (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            ingredients TEXT NOT NULL,
+            instructions TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS user_url_mappings (
+            session_id TEXT NOT NULL,
+            url TEXT NOT NULL,
+            recipe_id TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (session_id, url),
+            FOREIGN KEY (recipe_id) REFERENCES recipes(id)
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+def save_recipe(recipe_data):
+    """Save a recipe to the database and return its ID."""
+    recipe_id = uuid.uuid4().hex[:12]  # 12-character unique ID
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    
+    # Convert ingredients and instructions to JSON strings
+    ingredients_json = json.dumps(recipe_data.get('ingredients', []))
+    instructions_json = json.dumps(recipe_data.get('instructions', []))
+    
+    cursor.execute('''
+        INSERT INTO recipes (id, title, ingredients, instructions)
+        VALUES (?, ?, ?, ?)
+    ''', (recipe_id, recipe_data.get('title', ''), ingredients_json, instructions_json))
+    
+    conn.commit()
+    conn.close()
+    return recipe_id
+
+def get_recipe(recipe_id):
+    """Retrieve a recipe from the database by ID."""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    cursor.execute('SELECT title, ingredients, instructions FROM recipes WHERE id = ?', (recipe_id,))
+    row = cursor.fetchone()
+    conn.close()
+    
+    if row:
+        return {
+            'title': row[0],
+            'ingredients': json.loads(row[1]),
+            'instructions': json.loads(row[2])
+        }
+    return None
+
+def get_existing_recipe_for_url(session_id, url):
+    """Check if this user (session) has already processed this URL. Returns recipe_id if found."""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    cursor.execute('SELECT recipe_id FROM user_url_mappings WHERE session_id = ? AND url = ?', (session_id, url))
+    row = cursor.fetchone()
+    conn.close()
+    
+    if row:
+        return row[0]
+    return None
+
+def save_url_mapping(session_id, url, recipe_id):
+    """Save a mapping between a user session, URL, and recipe ID."""
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT OR REPLACE INTO user_url_mappings (session_id, url, recipe_id)
+        VALUES (?, ?, ?)
+    ''', (session_id, url, recipe_id))
+    conn.commit()
+    conn.close()
+
+# Initialize database on startup
+init_db()
 
 # Google Cloud Vision setup
 GOOGLE_VISION_CREDENTIALS = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
@@ -577,6 +673,17 @@ def index():
     return render_template("index.html")
 
 
+@app.route('/recipe/<recipe_id>')
+def view_recipe(recipe_id):
+    """Display a saved recipe by its ID."""
+    recipe = get_recipe(recipe_id)
+    if not recipe:
+        return "Recipe not found", 404
+    
+    # Add the recipe_id to the template context so we can show the shareable URL
+    return render_template("recipe.html", recipe=recipe, recipe_id=recipe_id)
+
+
 @app.route('/process_file', methods=['POST'])
 def process_file():
     """Process uploaded file(s) and extract recipe."""
@@ -623,7 +730,12 @@ def process_file():
         recipe_data = process_recipe_text(extracted_text, is_web_page=False)
         app.logger.info("Recipe processed successfully.")
 
-        return render_template("recipe.html", recipe=recipe_data)
+        # Save recipe to database and get shareable ID
+        recipe_id = save_recipe(recipe_data)
+        app.logger.info(f"Recipe saved with ID: {recipe_id}")
+
+        # Redirect to shareable URL
+        return redirect(url_for('view_recipe', recipe_id=recipe_id))
 
     except Exception as e:
         print(f"❌ Exception in /process_file: {e}", flush=True)
@@ -786,18 +898,33 @@ def process_url():
     if not recipe_url:
         return "No URL provided", 400
 
-    # Check if this is a NYTimes Cooking URL
-    is_nytimes = "cooking.nytimes.com" in recipe_url.lower()
+    # Normalize URL (remove trailing slash, convert to lowercase for comparison)
+    normalized_url = recipe_url.strip().rstrip('/')
     
-    # Set up session
-    session = requests.Session()
-    session.headers.update(get_browser_headers())
+    # Get or create Flask session ID for user tracking
+    if 'user_id' not in session:
+        session['user_id'] = uuid.uuid4().hex[:16]  # 16-character session ID
+    
+    user_session_id = session['user_id']
+    
+    # Check if this user has already processed this URL
+    existing_recipe_id = get_existing_recipe_for_url(user_session_id, normalized_url)
+    if existing_recipe_id:
+        app.logger.info(f"User {user_session_id} has already processed URL {normalized_url}, returning existing recipe {existing_recipe_id}")
+        return redirect(url_for('view_recipe', recipe_id=existing_recipe_id))
+
+    # Check if this is a NYTimes Cooking URL
+    is_nytimes = "cooking.nytimes.com" in normalized_url.lower()
+    
+    # Set up requests session (renamed to avoid conflict with Flask session)
+    http_session = requests.Session()
+    http_session.headers.update(get_browser_headers())
     
     # Authenticate if it's a NYTimes Cooking URL
     if is_nytimes:
         try:
             app.logger.info("Detected NYTimes Cooking URL, authenticating...")
-            session = authenticate_nytimes(session)
+            http_session = authenticate_nytimes(http_session)
             app.logger.info("NYTimes authentication successful")
         except Exception as e:
             app.logger.error(f"NYTimes authentication error: {e}")
@@ -805,12 +932,21 @@ def process_url():
 
     try:
         # Extract text from URL
-        extracted_text = extract_text_from_url(recipe_url, session)
+        extracted_text = extract_text_from_url(normalized_url, http_session)
         
         # Process recipe through OpenAI
         recipe_data = process_recipe_text(extracted_text, is_web_page=True)
         
-        return render_template("recipe.html", recipe=recipe_data)
+        # Save recipe to database and get shareable ID
+        recipe_id = save_recipe(recipe_data)
+        app.logger.info(f"Recipe saved with ID: {recipe_id}")
+        
+        # Save the URL mapping for this user
+        save_url_mapping(user_session_id, normalized_url, recipe_id)
+        app.logger.info(f"Saved URL mapping for user {user_session_id}: {normalized_url} -> {recipe_id}")
+
+        # Redirect to shareable URL
+        return redirect(url_for('view_recipe', recipe_id=recipe_id))
     except Exception as e:
         app.logger.error(f"Error processing URL: {e}")
         error_msg = str(e)

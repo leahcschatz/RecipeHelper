@@ -7,3 +7,4 @@ service-account-key.json
 *.json
 !package.json
 !package-lock.json
+recipes.db
