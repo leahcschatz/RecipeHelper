@@ -684,67 +684,6 @@ def view_recipe(recipe_id):
     return render_template("recipe.html", recipe=recipe, recipe_id=recipe_id)
 
 
-@app.route('/process_file', methods=['POST'])
-def process_file():
-    """Process uploaded file(s) and extract recipe."""
-    print("📥 /process_file endpoint hit", flush=True)
-    try:
-        # Get all uploaded files (support multiple files)
-        uploaded_files = request.files.getlist('file')
-        if not uploaded_files or len(uploaded_files) == 0:
-            print("⚠️ No files uploaded", flush=True)
-            app.logger.error("No files uploaded.")
-            return jsonify({"error": "No files uploaded"}), 400
-
-        print(f"📄 Got {len(uploaded_files)} file(s)", flush=True)
-        all_text_parts = []
-
-        # Process each file
-        for idx, uploaded_file in enumerate(uploaded_files):
-            if not uploaded_file.filename:
-                continue
-                
-            mime_type = uploaded_file.mimetype.lower()
-            file_bytes = uploaded_file.read()
-
-            print(f"📄 Processing file {idx + 1}/{len(uploaded_files)}: {uploaded_file.filename} ({uploaded_file.mimetype})", flush=True)
-
-            # Extract text from file
-            file_text = extract_text_from_file(file_bytes, mime_type, uploaded_file.filename)
-            
-            if file_text and file_text.strip():
-                all_text_parts.append(file_text)
-            else:
-                app.logger.warning(f"Could not extract text from {uploaded_file.filename}")
-
-        # Combine all extracted text
-        if not all_text_parts:
-            app.logger.error("No text extracted from any file.")
-            return jsonify({"error": "Could not extract text from any file."}), 400
-
-        # Join all text parts with page separators
-        extracted_text = "\n\n--- Page Break ---\n\n".join(all_text_parts)
-        app.logger.info(f"Combined text from {len(all_text_parts)} file(s), total length: {len(extracted_text)} characters")
-
-        # Process recipe through OpenAI
-        recipe_data = process_recipe_text(extracted_text, is_web_page=False)
-        app.logger.info("Recipe processed successfully.")
-
-        # Save recipe to database and get shareable ID
-        recipe_id = save_recipe(recipe_data)
-        app.logger.info(f"Recipe saved with ID: {recipe_id}")
-
-        # Redirect to shareable URL
-        return redirect(url_for('view_recipe', recipe_id=recipe_id))
-
-    except Exception as e:
-        print(f"❌ Exception in /process_file: {e}", flush=True)
-        app.logger.exception("Unexpected server error.")
-        error_msg = str(e)
-        if "OpenAI API error" in error_msg:
-            return jsonify({"error": error_msg}), 500
-        return jsonify({"error": f"Server error: {error_msg}"}), 500
-
 def get_browser_headers():
     """Get standard browser headers for web requests."""
     return {
